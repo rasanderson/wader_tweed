@@ -33,7 +33,7 @@ inca23_ll <- st_transform(inca23, "EPSG:4326")
 leaflet() %>% 
   addTiles() %>% 
   addPolygons(data = inca23_ll) %>% 
-  addCircles(data = nrfa_tweed_ll, color = "red")
+  addMarkers(data = nrfa_tweed_ll, label = ~ID)
 
 
 # MORECS data ####
