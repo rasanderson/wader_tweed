@@ -1,7 +1,10 @@
 # Get the NRFA for Tweed
 
 library(rnrfa)
+library(sf)
 # Tweed lat-lon bbox
+inca23 <- read_sf("data/inca23.gpkg")
+inca23_ll <- st_transform(inca23, "EPSG:4326")
 tweed_bbox <- st_bbox(inca23_ll)
 nrfa_bbox <- list(lon_min = tweed_bbox$xmin,
                   lon_max = tweed_bbox$xmax,
@@ -13,6 +16,7 @@ nrfa_tweed_official <- tmp[is.na(tmp$closed),]
 # Note difference between number of stations in catchment vs on Tweed itself
 # The nrfa_tweed list also includes closed stations and subcatchments
 nrfa_tweed_official$id
+nrfa_tweed <- readRDS("data/nrfa_stations_tweed.RDS")
 sort(unique(nrfa_tweed[["ID"]]))
 
 # Guaged Daily Flow River Tweed only ####
