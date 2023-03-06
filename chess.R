@@ -59,6 +59,8 @@ for(month_no in 1:no_of_months){
 }
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 
+saveRDS(BasinObs, file = "data/BasinObs.RDS")
+
 library(airGR)
 # 2. Prepare various function inputs
 # From https://hydrogr.github.io/airGR/page_1_get_started.html 
