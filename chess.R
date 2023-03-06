@@ -2,44 +2,60 @@ library(stars)
 library(sf)
 library(ncdf4)
 library(terra)
+library(rnrfa)
+
+# This scripts checks that airGR is working for subcatch 1 to 6 lumped together
+# as subcatch 6 is the first one that is NRFA gauged.
 
 rm(list = ls())
 
-subcatch_no <- 2
+subcatch_no <- 6
+
+# ID 21005 Lyneford   = INCA 6
+stn_gdf <- gdf(id = "21005")
 
 inca23 <- read_sf("data/inca23.gpkg")
-inca_sub <- inca23[inca23$reach_no == subcatch_no,]
+inca_sub <- inca23[inca23$reach_no <= subcatch_no,]
 plot(inca_sub["reach_no"])
 
-
-rain <- terra::rast("data/chess-met_precip/chess-met_precip_gb_1km_daily_19940101-19940131.nc")
-crs(rain) <- crs("+init=epsg:27700")
-# plot(rain[[5]]) # e.g. map of 5th day of month
-pet <- terra::rast("data/chess-pe_pet/chess-pe_pet_gb_1km_daily_19940101-19940131.nc")
-crs(pet) <- crs("+init=epsg:27700")
+# Merge subcatch 1 to 6 into single polygon
+inca_sub <- st_union(inca_sub)
+plot(inca_sub)
 
 
-daily_subcatch_rain_pet <- data.frame(matrix(ncol = 3, nrow = 0))
-colnames(daily_subcatch_rain_pet) <- c("date", "rain", "pet")
-for(day in 1:dim(rain)[3]){
-  rain_1day <- rain[[day]]
-  pet_1day  <- pet[[day]]
-  day_rain_sub <- terra::extract(rain_1day, vect(inca_sub["reach_no"]))
-  day_pet_sub  <- terra::extract(pet_1day,  vect(inca_sub["reach_no"]))
-  daily_rain_mean <- mean(day_rain_sub[,2]) * 24 * 60 * 60 # Convert to mm / day
-  daily_pet_mean  <- mean(day_pet_sub[,2])  * 24 * 60 * 60
-  rain_stats <- data.frame(date = time(rain_1day),
-                           rain = daily_rain_mean,
-                           pet  = daily_pet_mean)
-  daily_subcatch_rain_pet <- rbind(daily_subcatch_rain_pet, rain_stats)
+rain_files <- list.files("data/chess-met_precip/", full.names = TRUE)
+pet_files  <- list.files("data/chess-pe_pet/", full.names = TRUE)
+
+no_of_months <- length(rain_files)
+# no_of_months <- 1
+
+BasinObs <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(BasinObs) <- c("DatesR", "P", "E", "Qmm")
+
+for(month_no in 1:no_of_months){
+  rain <- terra::rast(rain_files[month_no])  
+  pet  <- terra::rast(pet_files[month_no])
+
+  crs(rain) <- crs("+init=epsg:27700")
+  crs(pet) <- crs("+init=epsg:27700")
+  
+    for(day in 1:dim(rain)[3]){
+    rain_1day <- rain[[day]]
+    pet_1day  <- pet[[day]]
+    # day_rain_sub <- terra::extract(rain_1day, vect(inca_sub["reach_no"]))
+    # day_pet_sub  <- terra::extract(pet_1day,  vect(inca_sub["reach_no"]))
+    # day_rain_sub <- crop(mask(rain_1day, vect(inca_sub)), vect(inca_sub)) # returns map of just target area
+    day_rain_sub <- terra::extract(rain_1day, vect(inca_sub))
+    day_pet_sub  <- terra::extract(pet_1day,  vect(inca_sub))
+    daily_rain_mean <- mean(day_rain_sub[,2]) * 24 * 60 * 60 # Convert to mm / day
+    daily_pet_mean  <- mean(day_pet_sub[,2])  * 24 * 60 * 60
+    rain_stats <- data.frame(DatesR = time(rain_1day),
+                             P      = daily_rain_mean,
+                             E      = daily_pet_mean,
+                             Qmm    = stn_gdf[time(rain_1day)])
+    BasinObs <- rbind(BasinObs, rain_stats)
+  }
+  
 }
 
-
-
-# daily temperature if needed
-# tmp3 <- terra::rast("data/chess-met_tas/chess-met_tas_gb_1km_daily_19931201-19931231.nc")
-# crs(tmp3) <- crs("+init=epsg:27700")
-# tmp3
-# summary(tmp3)
-# plot(tmp3[[15]]) # 15th day
 
