@@ -1,9 +1,12 @@
 # Semi-distributed version of airGR
 rm(list = ls())
 
+library(sf)
+library(ncdf4)
+library(raster)
+library(leaflet)
 
 # INCA-N 23 reaches in Tweed ####
-library(sf)
 inca23 <- read_sf("data/inca23.gpkg")
 inca23
 plot(inca23)
@@ -16,7 +19,6 @@ stations_sp <- raster("data/morecs/MaRIUS_G2G_NRFAStationIDGrid.nc", ncdf=TRUE,
                       varname = "ID")
 crs(stations_sp) <-crs("+init=epsg:27700")
 # Convert to vector
-library(sf)
 stations_df <- cbind(coordinates(stations_sp), as.vector(stations_sp))
 colnames(stations_df)[3] <- "ID"
 stations_df <- data.frame(stations_df)
