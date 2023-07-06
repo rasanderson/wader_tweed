@@ -81,7 +81,7 @@ for(month_no in 1:no_of_months){
     rain_stats <- data.frame(DatesR = terra::time(rain_1day),
                              P      = daily_rain_mean,
                              E      = daily_pet_mean,
-                             Qmm    = stn_gdf[time(rain_1day)])
+                             Qmm    = stn_gdf[terra::time(rain_1day)])
     BasinObs <- rbind(BasinObs, rain_stats)
   }
   
