@@ -2,6 +2,10 @@
 # reach 6 is guaged
 
 library(ggplot2)
+library(rnrfa)
+library(sf)
+
+rm(list=ls())
 
 # Flow rates along reaches based on Fig. 6 of Jarvie
 flow_fig6 <- read.csv("data/fig_6.csv")
@@ -28,6 +32,64 @@ plot(fig_lengths, reach_length[2:23]/1000) # very close match
 # flow vs 27.153, from fitted(flow_lm) i.e. 17.8% of flow. Take the airGR
 # OutputsModel$Qsim values or the observed reach 6 guaged values to do
 # initial calibration of reach 1 etc.
+flow_pct_diff <- data.frame(reach_no=1:6, pct=NA)
+guaged_reach_no <- 6
+for(i in 1:6){
+  flow_pct_diff$pct[i] <- fitted(flow_lm)[i] / fitted(flow_lm)[guaged_reach_no]
+}
+# To build up the data, work with reach no. 6 first to create the airGRiwrm
+# inputs for it first. Ones Qmm defined, use the adjusted values from there to
+# calibrate the upstream catchments
+# Reach 6 
+# ID 21005 Lyneford   = INCA 6
+stn_gdf <- gdf(id = "21005")
+inca23 <- read_sf("data/inca23.gpkg")
+inca_sub <- inca23[inca23$reach_no == guaged_reach_no,]
+plot(inca_sub["reach_no"])
+
+rain_files <- list.files("data/chess-met_precip/", full.names = TRUE)
+pet_files  <- list.files("data/chess-pe_pet/", full.names = TRUE)
+
+no_of_months <- length(rain_files)
+# no_of_months <- 1
+
+#BasinObs <- data.frame(matrix(ncol = 4, nrow = 0))
+#colnames(BasinObs) <- c("DatesR", "P", "E", "Qmm")
+
+BasinObs <- data.frame(DatesR = as.Date(character()), P = numeric(), E = numeric(),  Qmm = numeric())
+
+# Next bit is slow
+for(month_no in 1:no_of_months){
+  print(round(month_no / no_of_months * 100), 2)
+  rain <- terra::rast(rain_files[month_no])  
+  pet  <- terra::rast(pet_files[month_no])
+  
+  terra::crs(rain) <- terra::crs("+init=epsg:27700")
+  terra::crs(pet) <- terra::crs("+init=epsg:27700")
+  
+  for(day in 1:dim(rain)[3]){
+    cat(".")
+    rain_1day <- rain[[day]]
+    pet_1day  <- pet[[day]]
+    # day_rain_sub <- terra::extract(rain_1day, vect(inca_sub["reach_no"]))
+    # day_pet_sub  <- terra::extract(pet_1day,  vect(inca_sub["reach_no"]))
+    # day_rain_sub <- crop(mask(rain_1day, vect(inca_sub)), vect(inca_sub)) # returns map of just target area
+    day_rain_sub <- terra::extract(rain_1day, terra::vect(inca_sub))
+    day_pet_sub  <- terra::extract(pet_1day,  terra::vect(inca_sub))
+    daily_rain_mean <- mean(day_rain_sub[,2]) * 24 * 60 * 60 # Convert to mm / day
+    daily_pet_mean  <- mean(day_pet_sub[,2])
+    rain_stats <- data.frame(DatesR = terra::time(rain_1day),
+                             P      = daily_rain_mean,
+                             E      = daily_pet_mean,
+                             Qmm    = stn_gdf[time(rain_1day)])
+    BasinObs <- rbind(BasinObs, rain_stats)
+  }
+  
+}
+BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
+saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
+
+
 
 # It isn't easy to calculate delay times from reaches and cumecs as it depends
 # on width of river. We'll assume a constant value for all reaches, since
