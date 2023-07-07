@@ -85,3 +85,101 @@ PotEvap <- ConvertMeteoSD(griwrm, PotEvapTot)
 # object that describes the basin diagram:
   
 InputsModel <- CreateInputsModel(griwrm, DatesR, Precip, PotEvap)
+
+# Calibration of model ####
+# GRiwrmRunOptions object
+# The CreateRunOptions() function allows to prepare the options required for
+# the RunModel() function.
+#
+# The user must at least define the following arguments:
+#   
+# InputsModel: the associated input data
+# IndPeriod_Run: the period on which the model is run
+# Below, we define a one-year warm up period and we start the run period just after the warm up period.
+
+IndPeriod_Run <- seq(
+  which(InputsModel[[1]]$DatesR == (InputsModel[[1]]$DatesR[1] + 365*24*60*60)), # Set aside warm-up period
+  length(InputsModel[[1]]$DatesR) # Until the end of the time series
+)
+IndPeriod_WarmUp <- seq(1, IndPeriod_Run[1] - 1)
+
+# Arguments of the CreateRunOptions function for airGRiwrm are the same as for
+# the function in airGR and are copied for each node running a rainfall-runoff
+# model.
+
+RunOptions <- CreateRunOptions(
+  InputsModel,
+  IndPeriod_WarmUp = IndPeriod_WarmUp,
+  IndPeriod_Run = IndPeriod_Run
+)
+
+# GRiwrmInputsCrit object
+# The CreateInputsCrit() function allows to prepare the input in order to
+# calculate a criterion. We use composed criterion with a parameter
+# regularization based on @delavenneRegularizationApproachImprove2019.
+#
+# It needs the following arguments:
+#  
+# InputsModel: the inputs of the GRiwrm network previously prepared by the
+#               CreateInputsModel() function
+# FUN_CRIT: the name of the error criterion function (see the available
+#               functions description in the airGR package)
+# RunOptions: the options of the GRiwrm network previously prepared by
+#               the CreateRunOptions() function
+# Qobs: the observed variable time series (e.g. the discharge expressed in
+#               mm/time step)
+# AprioriIds: the list of the sub-catchments IDs where to apply a parameter
+#               regularization based on the parameters of an upstream
+#               sub-catchment (e.g. in Severn example the parameters of the
+#               sub-catchment “54057” is regulated by the parameters of the
+#               sub-catchment “54032”)
+# transfo: a transformation function applied on the flow before calculation of
+#               the criterion (square-root transformation is recommended for
+#               the De Lavenne regularization)
+# k: coefficient used for the weighted average between the performance criterion
+#               and the gap between the optimized parameter set and an a priori
+#               parameter set (a value equal to 0.15 is recommended for the De
+#               Lavenne regularization)
+InputsCrit <- CreateInputsCrit(
+  InputsModel = InputsModel,
+  FUN_CRIT = ErrorCrit_KGE2,
+  RunOptions = RunOptions,
+  Obs = Qobs[IndPeriod_Run, ],
+  AprioriIds = c(
+    "6" = "5",
+    "5" = "4",
+    "4" = "3",
+    "3" = "2",
+    "2" = "1"
+  ),
+  transfo = "sqrt",
+  k = 0.15
+)
+str(InputsCrit)
+
+# GRiwrmCalibOptions object
+# Before using the automatic calibration tool, the user needs to prepare the
+# calibration options with the CreateCalibOptions() function. The
+# GRiwrmInputsModel argument contains all the necessary information:
+CalibOptions <- CreateCalibOptions(InputsModel)
+
+# Calibration
+# The airGR calibration process is applied on each node of the GRiwrm network
+# from upstream nodes to downstream nodes.
+OutputsCalib <- suppressWarnings(
+  Calibration(InputsModel, RunOptions, InputsCrit, CalibOptions))
+ParamMichel <- sapply(OutputsCalib, "[[", "ParamFinalR")
+
+# Run the model with the optimized model parameters
+OutputsModels <- RunModel(
+  InputsModel,
+  RunOptions = RunOptions,
+  Param = ParamMichel
+)
+
+# Plot the results for each basin
+plot(OutputsModels, Qobs = Qobs[IndPeriod_Run,])
+
+# The resulting flows of each node in m3/s are directly available
+Qm3s <- attr(OutputsModels, "Qm3s")
+plot(Qm3s[1:365,]) # 1995
