@@ -89,6 +89,50 @@ for(month_no in 1:no_of_months){
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
 
+# Repeat the process for the ungaugaed reaches 1 to 5
+# Adjust the Qmm in accordance with values from earlier linear model
+# Need to put all this in a function or simplify at some point
+# As it is so slow will try as a function and parallise it (Linux-only)
+
+create_reach_info <- function(reach_no){
+  print(paste0("Reach number:", reach_no))
+  inca_sub <- inca23[inca23$reach_no == reach_no,]
+  plot(inca_sub["reach_no"])
+  
+  BasinObs <- data.frame(DatesR = as.Date(character()), P = numeric(), E = numeric(),  Qmm = numeric())
+  
+  # Next bit is slow
+  for(month_no in 1:no_of_months){
+    print(round(month_no / no_of_months * 100), 2)
+    rain <- terra::rast(rain_files[month_no])  
+    pet  <- terra::rast(pet_files[month_no])
+    
+    terra::crs(rain) <- terra::crs("+init=epsg:27700")
+    terra::crs(pet) <- terra::crs("+init=epsg:27700")
+    
+    for(day in 1:dim(rain)[3]){
+      cat(".")
+      rain_1day <- rain[[day]]
+      pet_1day  <- pet[[day]]
+      day_rain_sub <- terra::extract(rain_1day, terra::vect(inca_sub))
+      day_pet_sub  <- terra::extract(pet_1day,  terra::vect(inca_sub))
+      daily_rain_mean <- mean(day_rain_sub[,2]) * 24 * 60 * 60 # Convert to mm / day
+      daily_pet_mean  <- mean(day_pet_sub[,2])
+      rain_stats <- data.frame(DatesR = terra::time(rain_1day),
+                               P      = daily_rain_mean,
+                               E      = daily_pet_mean,
+                               Qmm    = stn_gdf[terra::time(rain_1day)] * flow_pct_diff$pct[reach_no])
+      BasinObs <- data.table::rbindlist(list(BasinObs, rain_stats))
+    }
+    
+  }
+  BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
+  saveRDS(BasinObs, file = paste0("data/BasinObs_", reach_no, ".RDS"))
+}
+
+library(parallel)
+library(pbapply)
+pblapply(1:5, create_reach_info, cl=20)
 
 
 # It isn't easy to calculate delay times from reaches and cumecs as it depends
