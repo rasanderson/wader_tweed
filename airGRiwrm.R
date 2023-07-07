@@ -61,10 +61,13 @@ BasinsObs <- list(basins_01,
                   basins_04,
                   basins_05,
                   basins_06)
-names(BasinsObs) <- nodes$gauge_id[6:1]
+names(BasinsObs) <- nodes$gauge_id[6:1] # in reverse order to match nodes
 
 # If I understand the tutorial correctly, have to calculate some values for
-# all basins
+# all basins. 
+# DatesR: all the dates
+# PrecipTot, PotEvapTot, Qobs: each column is value from one basin, and 
+#      each row a date
 DatesR <- BasinsObs[[1]]$DatesR
 PrecipTot <- cbind(sapply(BasinsObs, function(x) {x$precipitation}))
 PotEvapTot <- cbind(sapply(BasinsObs, function(x) {x$peti}))
@@ -73,6 +76,21 @@ Qobs <- cbind(sapply(BasinsObs, function(x) {x$discharge_spec}))
 # These meteorological data consist in mean precipitation and PE for each basin.
 # However, the model needs mean precipitation and PE at sub-basin scale. The
 # function ConvertMeteoSD calculates these values for downstream sub-basins:
+# The next function isn't working
+# ConvertMeteoSD.character <- function(x, griwrm, meteo, ...) {
+#   upperBasins <- !is.na(griwrm$down) & griwrm$down == x
+#   if(all(!upperBasins)) {
+#     return(meteo[,x])
+#   }
+#   upperIDs <- griwrm$id[upperBasins]
+#   areas <- griwrm$area[match(c(x, upperIDs), griwrm$id)]
+#   output <- ConvertMeteoSD(
+#     meteo[,c(x, upperIDs), drop = FALSE],
+#     areas = areas
+#   )
+#   return(output)
+# }
+
 Precip  <- ConvertMeteoSD(griwrm, PrecipTot)
 PotEvap <- ConvertMeteoSD(griwrm, PotEvapTot)
 
