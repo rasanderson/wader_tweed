@@ -89,6 +89,7 @@ for(month_no in 1:no_of_months){
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
 
+<<<<<<< HEAD
 # Repeat the process for the ungaugaed reaches 1 to 5
 # Adjust the Qmm in accordance with values from earlier linear model
 # Need to put all this in a function or simplify at some point
@@ -166,6 +167,8 @@ pblapply(1, create_reach_info, cl=20)
 =======
 pblapply(1:5, create_reach_info, cl=20)
 >>>>>>> 5896e86907d939098607bc4da34c1381428010ec
+=======
+>>>>>>> parent of 6e69e70... Modified to operate just on reach 6; terra library
 
 
 # It isn't easy to calculate delay times from reaches and cumecs as it depends
