@@ -1,0 +1,5 @@
+When running models use the local version not the OneDrive version as
+OneDrive stuffs up Git version control.
+
+However, as it takes so long to calculate the data, have a backup of
+the datasets stored on OneDrive
