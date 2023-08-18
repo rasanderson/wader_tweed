@@ -102,7 +102,7 @@ PotEvap <- ConvertMeteoSD(griwrm, PotEvapTot)
 # The airGR CreateInputsModel function is extended in order to handle the GRiwrm
 # object that describes the basin diagram:
   
-InputsModel <- CreateInputsModel(griwrm, DatesR, PrecipTot, PotEvapTot)
+InputsModel <- CreateInputsModel(griwrm, DatesR, Precip, PotEvap)
 
 # Calibration of model ####
 # GRiwrmRunOptions object
@@ -116,7 +116,7 @@ InputsModel <- CreateInputsModel(griwrm, DatesR, PrecipTot, PotEvapTot)
 # Below, we define a one-year warm up period and we start the run period just after the warm up period.
 
 IndPeriod_Run <- seq(
-  which(InputsModel[[1]]$DatesR == (InputsModel[[1]]$DatesR[1] + 365*24*60*60*3)), # Set aside warm-up period
+  which(InputsModel[[1]]$DatesR == (InputsModel[[1]]$DatesR[1] + 365*24*60*60)), # Set aside warm-up period
   length(InputsModel[[1]]$DatesR) # Until the end of the time series
 )
 IndPeriod_WarmUp <- seq(1, IndPeriod_Run[1] - 1)
@@ -201,11 +201,3 @@ plot(OutputsModels, Qobs = Qobs[IndPeriod_Run,])
 # The resulting flows of each node in m3/s are directly available
 Qm3s <- attr(OutputsModels, "Qm3s")
 plot(Qm3s[1:365,]) # 1995
-
-# Calculate KGE2 model efficiency index
-OutputsCrit <- ErrorCrit_KGE(InputsCrit = InputsCrit[[1]], OutputsModel = OutputsModels[[1]])
-OutputsCrit <- ErrorCrit_KGE(InputsCrit = InputsCrit[[6]], OutputsModel = OutputsModels[[6]])
-
-
-
-
