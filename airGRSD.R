@@ -141,3 +141,51 @@ for(reach_no in 1:5){
 # reach length is roughly the same at source vs Berwick. Use 2 days initially
 # as default in airGR semi-distributed model.
 delay_days <- 2
+
+
+# Reach 7 Peebles / Scots Mill is gauged
+# ID 21003
+guaged_reach_no <- 7
+stn_gdf <- gdf(id = "21003")
+inca23 <- read_sf("data/inca23.gpkg")
+inca_sub <- inca23[inca23$reach_no == guaged_reach_no,]
+plot(inca_sub["reach_no"])
+
+rain_files <- list.files("data/chess-met_precip/", full.names = TRUE)
+pet_files  <- list.files("data/chess-pe_pet/", full.names = TRUE)
+
+no_of_months <- length(rain_files)
+
+BasinObs <- data.frame(DatesR = as.Date(character()), P = numeric(), E = numeric(),  Qmm = numeric())
+
+# Next bit is slow
+for(month_no in 1:no_of_months){
+  print(round(month_no / no_of_months * 100), 2)
+  rain <- terra::rast(rain_files[month_no])  
+  pet  <- terra::rast(pet_files[month_no])
+  
+  terra::crs(rain) <- terra::crs("+init=epsg:27700")
+  terra::crs(pet) <- terra::crs("+init=epsg:27700")
+  
+  for(day in 1:dim(rain)[3]){
+    cat(".")
+    rain_1day <- rain[[day]]
+    pet_1day  <- pet[[day]]
+    # day_rain_sub <- terra::extract(rain_1day, vect(inca_sub["reach_no"]))
+    # day_pet_sub  <- terra::extract(pet_1day,  vect(inca_sub["reach_no"]))
+    # day_rain_sub <- crop(mask(rain_1day, vect(inca_sub)), vect(inca_sub)) # returns map of just target area
+    day_rain_sub <- terra::extract(rain_1day, terra::vect(inca_sub))
+    day_pet_sub  <- terra::extract(pet_1day,  terra::vect(inca_sub))
+    daily_rain_mean <- mean(day_rain_sub[,2]) * 24 * 60 * 60 # Convert to mm / day
+    daily_pet_mean  <- mean(day_pet_sub[,2])
+    rain_stats <- data.frame(DatesR = terra::time(rain_1day),
+                             P      = daily_rain_mean,
+                             E      = daily_pet_mean,
+                             Qmm    = stn_gdf[terra::time(rain_1day)])
+    BasinObs <- rbind(BasinObs, rain_stats)
+  }
+  
+}
+BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
+saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
+
