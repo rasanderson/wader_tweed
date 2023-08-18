@@ -89,29 +89,49 @@ for(month_no in 1:no_of_months){
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
 
+<<<<<<< HEAD
 # Repeat the process for the ungaugaed reaches 1 to 5
 # Adjust the Qmm in accordance with values from earlier linear model
 # Need to put all this in a function or simplify at some point
 # As it is so slow will try as a function and parallise it (Linux-only)
 
+<<<<<<< HEAD
+library(tictoc)
+create_reach_info <- function(reach_no){
+  tic("initial setup")
+  #print(paste0("Reach number:", reach_no))
+=======
 create_reach_info <- function(reach_no){
   print(paste0("Reach number:", reach_no))
+>>>>>>> 5896e86907d939098607bc4da34c1381428010ec
   inca_sub <- inca23[inca23$reach_no == reach_no,]
   plot(inca_sub["reach_no"])
   
   BasinObs <- data.frame(DatesR = as.Date(character()), P = numeric(), E = numeric(),  Qmm = numeric())
   
   # Next bit is slow
+<<<<<<< HEAD
+  for(month_no in 1:no_of_months-82){
+    tic("start of month_no")
+    #print(round(month_no / no_of_months * 100), 2)
+=======
   for(month_no in 1:no_of_months){
     print(round(month_no / no_of_months * 100), 2)
+>>>>>>> 5896e86907d939098607bc4da34c1381428010ec
     rain <- terra::rast(rain_files[month_no])  
     pet  <- terra::rast(pet_files[month_no])
     
     terra::crs(rain) <- terra::crs("+init=epsg:27700")
     terra::crs(pet) <- terra::crs("+init=epsg:27700")
     
+<<<<<<< HEAD
+    for(day in 1:dim(rain)[3]-22){
+      tic("day loop")
+      #cat(".")
+=======
     for(day in 1:dim(rain)[3]){
       cat(".")
+>>>>>>> 5896e86907d939098607bc4da34c1381428010ec
       rain_1day <- rain[[day]]
       pet_1day  <- pet[[day]]
       day_rain_sub <- terra::extract(rain_1day, terra::vect(inca_sub))
@@ -122,17 +142,33 @@ create_reach_info <- function(reach_no){
                                P      = daily_rain_mean,
                                E      = daily_pet_mean,
                                Qmm    = stn_gdf[terra::time(rain_1day)] * flow_pct_diff$pct[reach_no])
+<<<<<<< HEAD
+      tic("rbindlist")
+=======
+>>>>>>> 5896e86907d939098607bc4da34c1381428010ec
       BasinObs <- data.table::rbindlist(list(BasinObs, rain_stats))
     }
     
   }
   BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
+<<<<<<< HEAD
+  tic("saveRDS")
   saveRDS(BasinObs, file = paste0("data/BasinObs_", reach_no, ".RDS"))
+  toc()
+=======
+  saveRDS(BasinObs, file = paste0("data/BasinObs_", reach_no, ".RDS"))
+>>>>>>> 5896e86907d939098607bc4da34c1381428010ec
 }
 
 library(parallel)
 library(pbapply)
+<<<<<<< HEAD
+pblapply(1, create_reach_info, cl=20)
+=======
 pblapply(1:5, create_reach_info, cl=20)
+>>>>>>> 5896e86907d939098607bc4da34c1381428010ec
+=======
+>>>>>>> parent of 6e69e70... Modified to operate just on reach 6; terra library
 
 
 # It isn't easy to calculate delay times from reaches and cumecs as it depends
