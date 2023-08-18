@@ -8,7 +8,7 @@ rm(list = ls())
 library(airGRiwrm)
 
 # Semi-distributed network description ####
-no_of_reaches <- 6
+no_of_reaches <- 12
 nodes <- data.frame(gauge_id = character(no_of_reaches),
                     downstream_id = character(no_of_reaches),
                     distance_downstream = numeric(no_of_reaches),
@@ -23,11 +23,16 @@ nodes$downstream_id <- c(NA, as.character(no_of_reaches:2))
 # Units are km
 # nodes$distance_downstream <- c(NA, 6.00, 7.50, 7.0, 7.0, 7.0)
 # to check for change
-nodes$distance_downstream <- c(NA, 4.500, 6.000, 7.500, 7.000, 7.000)
+#nodes$distance_downstream <- c(NA, 4.500, 6.000, 7.500, 7.000, 7.000)
 # Area is in km2
-nodes$area <- c(15, 159, 38, 87, 27, 21)
+#nodes$area <- c(15, 159, 38, 87, 27, 21)
+# Jarvie Table 2 (km)
+nodes$distance_downstream <- c(NA,   7.00, 7.00, 7.50, 6.00, 4.50, 8.75, 8.50,
+                               6.00, 6.50, 7.00, 1.50)
+# Jarvie Table 3 (km2)
+nodes$area <- c(21, 27, 87, 38, 159, 15, 344, 87, 83, 37, 50, 471)
 # Area must be cumulative sum
-nodes$area <- cumsum(nodes$area[6:1])[6:1]
+nodes$area <- cumsum(nodes$area[12:1])[12:1]
 nodes$model <- "RunModel_GR4J"
 
 # Create object of class GRiwrm
@@ -47,6 +52,14 @@ basins_03 <- readRDS("data/BasinObs_3.RDS")
 basins_04 <- readRDS("data/BasinObs_4.RDS")
 basins_05 <- readRDS("data/BasinObs_5.RDS")
 basins_06 <- readRDS("data/BasinObs_6.RDS")
+basins_07 <- readRDS("data/BasinObs_7.RDS")
+basins_08 <- readRDS("data/BasinObs_8.RDS")
+basins_09 <- readRDS("data/BasinObs_9.RDS")
+basins_10 <- readRDS("data/BasinObs_10.RDS")
+basins_11 <- readRDS("data/BasinObs_11.RDS")
+basins_12 <- readRDS("data/BasinObs_12.RDS")
+
+
 # For simplicity, set column names to be same as Severn example
 colnames(basins_01) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 colnames(basins_02) <- c("DatesR", "precipitation", "peti", "discharge_spec")
@@ -54,14 +67,27 @@ colnames(basins_03) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 colnames(basins_04) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 colnames(basins_05) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 colnames(basins_06) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_07) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_08) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_09) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_10) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_11) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_12) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+
 # Assemble into list object
 BasinsObs <- list(basins_01,
                   basins_02,
                   basins_03,
                   basins_04,
                   basins_05,
-                  basins_06)
-names(BasinsObs) <- nodes$gauge_id[6:1] # in reverse order to match nodes
+                  basins_06,
+                  basins_07,
+                  basins_08,
+                  basins_09,
+                  basins_10,
+                  basins_11,
+                  basins_12)
+names(BasinsObs) <- nodes$gauge_id[12:1] # in reverse order to match nodes
 
 # If I understand the tutorial correctly, have to calculate some values for
 # all basins. 
@@ -164,6 +190,12 @@ InputsCrit <- CreateInputsCrit(
   RunOptions = RunOptions,
   Obs = Qobs[IndPeriod_Run, ],
   AprioriIds = c(
+    "12" = "11",
+    "11" = "10",
+    "10" = "9",
+    "9" = "8",
+    "8" = "7",
+    "7" = "6",
     "6" = "5",
     "5" = "4",
     "4" = "3",
@@ -201,3 +233,21 @@ plot(OutputsModels, Qobs = Qobs[IndPeriod_Run,])
 # The resulting flows of each node in m3/s are directly available
 Qm3s <- attr(OutputsModels, "Qm3s")
 plot(Qm3s[1:365,]) # 1995
+
+# Just check basin 12
+tmp <- data.frame(cbind(basins_12[1:2192,], Qm3s=Qm3s[1:2192, 13]))
+
+obspred_lng <- tidyr::pivot_longer(tmp, cols = c("discharge_spec", "Qm3s"),
+                    names_to = "pred_obs", values_to = "flow")
+ggplot2::ggplot(obspred_lng, aes(x = DatesR, y = flow, colour = pred_obs)) +
+  geom_point() +
+  geom_line() +
+  coord_trans(y = "log")
+
+ggplot2::ggplot(tmp, aes(x = discharge_spec, y = Qm3s)) +
+  geom_point() +
+  xlim(1, 500) +
+  ylim(1, 500) +
+  coord_trans(y = "log", x = "log") +
+  geom_abline(slope =45, intercept = 0) 
+
