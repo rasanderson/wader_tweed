@@ -8,7 +8,7 @@ rm(list = ls())
 library(airGRiwrm)
 
 # Semi-distributed network description ####
-no_of_reaches <- 12
+no_of_reaches <- 23
 nodes <- data.frame(gauge_id = character(no_of_reaches),
                     downstream_id = character(no_of_reaches),
                     distance_downstream = numeric(no_of_reaches),
@@ -26,13 +26,21 @@ nodes$downstream_id <- c(NA, as.character(no_of_reaches:2))
 #nodes$distance_downstream <- c(NA, 4.500, 6.000, 7.500, 7.000, 7.000)
 # Area is in km2
 #nodes$area <- c(15, 159, 38, 87, 27, 21)
-# Jarvie Table 2 (km)
-nodes$distance_downstream <- c(NA,   7.00, 7.00, 7.50, 6.00, 4.50, 8.75, 8.50,
-                               6.00, 6.50, 7.00, 1.50)
-# Jarvie Table 3 (km2)
-nodes$area <- c(21, 27, 87, 38, 159, 15, 344, 87, 83, 37, 50, 471)
-# Area must be cumulative sum
-nodes$area <- cumsum(nodes$area[12:1])[12:1]
+# Jarvie Table 2 (km) from outflow (23) to source (1)
+nodes$distance_downstream <- c(NA,   6.00, 4.00, 8.00, 8.00,
+                               6.50, 7.50, 7.00, 8.50, 6.50,
+                               2.50, 2.50, 1.50, 7.00, 6.50,
+                               6.00, 8.50, 8.75, 4.50, 6.00,
+                               7.50, 7.00, 7.00)
+# Jarvie Table 3 (km2) from outflow (23) to source (1)
+nodes$area <- c(658,    9,  179,  159, 1139,
+                 27,   43,  308,   17,  254,
+                  4,  471,   50,   37,   83,
+                 87,  344,   15,  159,   38,
+                 87,   27,   21)
+  
+# Area must be cumulative sum (presumably - need to check)
+nodes$area <- cumsum(nodes$area[23:1])[23:1]
 nodes$model <- "RunModel_GR4J"
 
 # Create object of class GRiwrm
@@ -58,6 +66,17 @@ basins_09 <- readRDS("data/BasinObs_9.RDS")
 basins_10 <- readRDS("data/BasinObs_10.RDS")
 basins_11 <- readRDS("data/BasinObs_11.RDS")
 basins_12 <- readRDS("data/BasinObs_12.RDS")
+basins_13 <- readRDS("data/BasinObs_13.RDS")
+basins_14 <- readRDS("data/BasinObs_14.RDS")
+basins_15 <- readRDS("data/BasinObs_15.RDS")
+basins_16 <- readRDS("data/BasinObs_16.RDS")
+basins_17 <- readRDS("data/BasinObs_17.RDS")
+basins_18 <- readRDS("data/BasinObs_18.RDS")
+basins_19 <- readRDS("data/BasinObs_19.RDS")
+basins_20 <- readRDS("data/BasinObs_20.RDS")
+basins_21 <- readRDS("data/BasinObs_21.RDS")
+basins_22 <- readRDS("data/BasinObs_22.RDS")
+basins_23 <- readRDS("data/BasinObs_23.RDS")
 
 
 # For simplicity, set column names to be same as Severn example
@@ -73,6 +92,17 @@ colnames(basins_09) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 colnames(basins_10) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 colnames(basins_11) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 colnames(basins_12) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_13) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_14) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_15) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_16) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_17) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_18) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_19) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_20) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_21) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_22) <- c("DatesR", "precipitation", "peti", "discharge_spec")
+colnames(basins_23) <- c("DatesR", "precipitation", "peti", "discharge_spec")
 
 # Assemble into list object
 BasinsObs <- list(basins_01,
@@ -86,8 +116,20 @@ BasinsObs <- list(basins_01,
                   basins_09,
                   basins_10,
                   basins_11,
-                  basins_12)
-names(BasinsObs) <- nodes$gauge_id[12:1] # in reverse order to match nodes
+                  basins_12,
+                  basins_13,
+                  basins_14,
+                  basins_15,
+                  basins_16,
+                  basins_17,
+                  basins_18,
+                  basins_19,
+                  basins_20,
+                  basins_21,
+                  basins_22,
+                  basins_23)
+
+names(BasinsObs) <- nodes$gauge_id[23:1] # in reverse order to match nodes
 
 # If I understand the tutorial correctly, have to calculate some values for
 # all basins. 
@@ -190,6 +232,17 @@ InputsCrit <- CreateInputsCrit(
   RunOptions = RunOptions,
   Obs = Qobs[IndPeriod_Run, ],
   AprioriIds = c(
+    "23" = "22",
+    "22" = "21",
+    "21" = "20",
+    "20" = "19",
+    "19" = "18",
+    "18" = "17",
+    "17" = "16",
+    "16" = "15",
+    "15" = "14",
+    "14" = "13",
+    "13" = "12",
     "12" = "11",
     "11" = "10",
     "10" = "9",
