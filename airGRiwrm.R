@@ -287,20 +287,28 @@ plot(OutputsModels, Qobs = Qobs[IndPeriod_Run,])
 Qm3s <- attr(OutputsModels, "Qm3s")
 plot(Qm3s[1:365,]) # 1995
 
-# Just check basin 12
-tmp <- data.frame(cbind(basins_12[1:2192,], Qm3s=Qm3s[1:2192, 13]))
+# Just check basin specific reach
+selected_reach <- 2
+plot(Qm3s[, c("DatesR", as.character(selected_reach))])
+plot(OutputsModels[[as.character(selected_reach)]], Qobs = Qobs[IndPeriod_Run, selected_reach])
+obsQ <- data.frame(DatesR = BasinsObs[[as.character(selected_reach)]]$DatesR,
+                   obs = BasinsObs[[as.character(selected_reach)]]$discharge_spec)
+predQ <- data.frame(DatesR = Qm3s$DatesR, pred = Qm3s[, as.character(selected_reach)])
 
-obspred_lng <- tidyr::pivot_longer(tmp, cols = c("discharge_spec", "Qm3s"),
+obspred <- dplyr::left_join(predQ, obsQ)
+
+obspred_lng <- tidyr::pivot_longer(obspred, cols = c("pred", "obs"),
                     names_to = "pred_obs", values_to = "flow")
 ggplot2::ggplot(obspred_lng, aes(x = DatesR, y = flow, colour = pred_obs)) +
-  geom_point() +
+  scale_colour_manual(values = c("black", "red")) +
   geom_line() +
-  coord_trans(y = "log")
+  theme_classic()
 
-ggplot2::ggplot(tmp, aes(x = discharge_spec, y = Qm3s)) +
+ggplot2::ggplot(obspred, aes(x = obs, y = pred)) +
   geom_point() +
-  xlim(1, 500) +
-  ylim(1, 500) +
+  geom_abline(slope = 45, intercept = 0) +
   coord_trans(y = "log", x = "log") +
-  geom_abline(slope =45, intercept = 0) 
+  xlim(5, 1000) +
+  ylim(5, 1000) +
+  theme_classic()
 
