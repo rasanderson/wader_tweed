@@ -27,7 +27,7 @@ reach_length <- c(7000, 7000, 7000, 7500, 6000, 4500, 8750, 8500, 6000,
                   6500, 8000, 8000, 4000, 6000)
 plot(fig_lengths, reach_length[2:23]/1000) # very close match
 
-# Gauged Reach 6 ####
+# Reach 6 gauged ####
 # Use the percentage decline of flow from guaged downstream reaches to aid
 # calibration of ungauged upstream ones. e.g. reach 1 has predicted 4.849
 # flow vs 27.153, from fitted(flow_lm) i.e. 17.8% of flow. Take the airGR
@@ -90,8 +90,8 @@ for(month_no in 1:no_of_months){
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
 
-# Ungauged Reaches 1 to 5 ####
-# Repeat the process for the ungaugaed reaches 1 to 5
+# Reaches 1 to 5 ungauged ####
+# Repeat the process for the ungauged reaches 1 to 5
 # Adjust the Qmm in accordance with values from earlier linear model
 # Need to put all this in a function or simplify at some point
 # As it is so slow will try as a function and parallise it (Linux-only)
@@ -142,7 +142,7 @@ for(reach_no in 1:5){
 # as default in airGR semi-distributed model.
 delay_days <- 2
 
-# Gauged Reach 7 ####
+# Reach 7 gauged ####
 # Reach 7 Peebles / Scots Mill is gauged
 # ID 21003
 guaged_reach_no <- 7
@@ -189,7 +189,7 @@ for(month_no in 1:no_of_months){
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
 
-# Gauged Reach 12  ####
+# Reach 12 gauged  ####
 # Reach 12 Boleside is gauged
 # ID 21006
 guaged_reach_no <- 12
@@ -236,7 +236,7 @@ for(month_no in 1:no_of_months){
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_", guaged_reach_no, ".RDS"))
 
-# Ungauged Reaches 8 to 11 ####
+# Reaches 8 to 11 ungauged ####
 # Estimate pct decline in flow upstream of Reach 12 to ungauged Reach 8
 guaged_reach_no <- 12
 for(i in 8:12){
