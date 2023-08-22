@@ -299,12 +299,13 @@ obspred <- dplyr::left_join(predQ, obsQ)
 
 obspred_lng <- tidyr::pivot_longer(obspred, cols = c("pred", "obs"),
                     names_to = "pred_obs", values_to = "flow")
-ggplot2::ggplot(obspred_lng, aes(x = DatesR, y = flow, colour = pred_obs)) +
+library(ggplo2)
+ggplot(obspred_lng, aes(x = DatesR, y = flow, colour = pred_obs)) +
   scale_colour_manual(values = c("black", "red")) +
   geom_line() +
   theme_classic()
 
-ggplot2::ggplot(obspred, aes(x = obs, y = pred)) +
+ggplot(obspred, aes(x = obs, y = pred)) +
   geom_point() +
   geom_abline(slope = 45, intercept = 0) +
   coord_trans(y = "log", x = "log") +
