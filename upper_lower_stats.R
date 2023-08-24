@@ -67,7 +67,8 @@ for(month_no in 1:no_of_months){
   }
   
 }
-# Rain is in kg m-2 s-1
-# TAS is in Kelvin
+# Rain is in kg m-2 s-1 = 1 mm/s (no change)
+# TAS is in Kelvin = -273.15
+BasinObs$TAS <- BasinObs$TAS - 273.15
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_upper.RDS"))
