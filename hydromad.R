@@ -9,17 +9,17 @@ rm(list=ls())
 library(hydromad)
 library(zoo)
 
-basin <- readRDS("data/BasinObs_12.RDS")
-basin_area <- 471 /10
-colnames(basin)[4] <- "Q" # not sure how fussy hydromad is on colnames
+basin <- readRDS("data/BasinObs_upper.RDS")
+basin_area <- 1500
+colnames(basin)[3:4] <- c("E","Q" )# not sure how fussy hydromad is on colnames
 basin <- zoo(basin[,c(2,4,3)], basin$DatesR, frequency = 1)
 # Not sure if areal conversion needed
-basin$Q <- convertFlow(basin$Q, from = "ML", area.km2 = basin_area)
+#basin$Q <- convertFlow(basin$Q, from = "ML", area.km2 = basin_area)
 xyplot(basin, screens = c("Streamflow (mm/day)",
                           "Areal rain (mm/day)",
                           "Temperature or Evap. (deg. C)"),
        xlab = NULL)
-summary(basins)
+summary(basin)
 
 # Calculate runoff ratio; typical average should be around 0.37
 ok <- complete.cases(basin[, 1:2])
