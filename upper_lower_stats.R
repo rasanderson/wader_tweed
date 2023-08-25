@@ -72,3 +72,4 @@ for(month_no in 1:no_of_months){
 BasinObs$TAS <- BasinObs$TAS - 273.15
 BasinObs$DatesR <- as.POSIXct(BasinObs$DatesR)
 saveRDS(BasinObs, file = paste0("data/BasinObs_upper.RDS"))
+write.table(BasinObs, "data/BasinObs_upper.csv", sep = ",", col.names = FALSE)
